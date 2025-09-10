@@ -36,8 +36,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Street Router API',
-    'DESCRIPTION': 'API для построения маршрутов',
+    'TITLE': 'ДДС Управление',
+    'DESCRIPTION': 'Веб-сервис для управления движением денежных средств (ДДС)',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
