@@ -19,6 +19,8 @@ fi
 
 python manage.py migrate
 python manage.py collectstatic --noinput
+python manage.py load_initial_data
+python manage.py ceate_superuser -u $ADMIN_USERNAME -e $ADMIN_EMAIL -p $ADMIN_PASSWORD 
 
 echo "Starting Supervisor..."
 exec /usr/bin/supervisord -c /opt/app/supervisor/supervisord.conf --nodaemon

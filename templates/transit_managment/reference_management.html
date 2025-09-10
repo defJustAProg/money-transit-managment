@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Управление справочниками - ДДС Управление{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">
+            <i class="fas fa-cogs me-2"></i>
+            Управление справочниками
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Статусы -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>Статусы
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addStatusModal">
+                        <i class="fas fa-plus me-1"></i>Добавить статус
+                    </button>
+                </div>
+                <div class="list-group">
+                    {% for status in statuses %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ status.name }}</strong>
+                                {% if status.description %}
+                                    <br><small class="text-muted">{{ status.description }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editStatus({{ status.id }}, '{{ status.name }}', '{{ status.description }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteStatus({{ status.id }}, '{{ status.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Статусы не найдены</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Типы операций -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Типы операций
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+                        <i class="fas fa-plus me-1"></i>Добавить тип
+                    </button>
+                </div>
+                <div class="list-group">
+                    {% for type in transaction_types %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ type.name }}</strong>
+                                {% if type.description %}
+                                    <br><small class="text-muted">{{ type.description }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="editType({{ type.id }}, '{{ type.name }}', '{{ type.description }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteType({{ type.id }}, '{{ type.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Типы операций не найдены</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Категории -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-folder me-2"></i>Категории
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="fas fa-plus me-1"></i>Добавить категорию
+                    </button>
+                </div>
+                <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                    {% for category in categories %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ category.name }}</strong>
+                                    <br><small class="text-muted">{{ category.transaction_type.name }}</small>
+                                    {% if category.description %}
+                                        <br><small class="text-muted">{{ category.description }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.description }}', {{ category.transaction_type.id }}, {{ category.parent.id|default:'null' }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteCategory({{ category.id }}, '{{ category.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Категории не найдены</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна для добавления/редактирования -->
+<!-- Модальное окно для статусов -->
+<div class="modal fade" id="addStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить статус</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="statusName" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="statusName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="statusDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="statusDescription" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для типов операций -->
+<div class="modal fade" id="addTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить тип операции</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="typeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="typeName" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="typeName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="typeDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="typeDescription" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для категорий -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить категорию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="categoryForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryType" class="form-label">Тип операции</label>
+                        <select class="form-select" id="categoryType" required>
+                            <option value="">Выберите тип операции</option>
+                            {% for type in transaction_types %}
+                                <option value="{{ type.id }}">{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryParent" class="form-label">Родительская категория</label>
+                        <select class="form-select" id="categoryParent">
+                            <option value="">Нет (корневая категория)</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">Описание</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Обработчики для статусов
+$('#statusForm').submit(function(e) {
+    e.preventDefault();
+    // Здесь будет AJAX запрос для создания/обновления статуса
+    alert('Функция добавления статуса будет реализована через API');
+});
+
+// Обработчики для типов операций
+$('#typeForm').submit(function(e) {
+    e.preventDefault();
+    // Здесь будет AJAX запрос для создания/обновления типа
+    alert('Функция добавления типа операции будет реализована через API');
+});
+
+// Обработчики для категорий
+$('#categoryForm').submit(function(e) {
+    e.preventDefault();
+    // Здесь будет AJAX запрос для создания/обновления категории
+    alert('Функция добавления категории будет реализована через API');
+});
+
+// Функции редактирования
+function editStatus(id, name, description) {
+    $('#statusName').val(name);
+    $('#statusDescription').val(description);
+    $('#addStatusModal .modal-title').text('Редактировать статус');
+    $('#addStatusModal').modal('show');
+}
+
+function editType(id, name, description) {
+    $('#typeName').val(name);
+    $('#typeDescription').val(description);
+    $('#addTypeModal .modal-title').text('Редактировать тип операции');
+    $('#addTypeModal').modal('show');
+}
+
+function editCategory(id, name, description, typeId, parentId) {
+    $('#categoryName').val(name);
+    $('#categoryDescription').val(description);
+    $('#categoryType').val(typeId);
+    $('#categoryParent').val(parentId || '');
+    $('#addCategoryModal .modal-title').text('Редактировать категорию');
+    $('#addCategoryModal').modal('show');
+}
+
+// Функции удаления
+function deleteStatus(id, name) {
+    if (confirm('Вы уверены, что хотите удалить статус "' + name + '"?')) {
+        // Здесь будет AJAX запрос для удаления статуса
+        alert('Функция удаления статуса будет реализована через API');
+    }
+}
+
+function deleteType(id, name) {
+    if (confirm('Вы уверены, что хотите удалить тип операции "' + name + '"?')) {
+        // Здесь будет AJAX запрос для удаления типа
+        alert('Функция удаления типа операции будет реализована через API');
+    }
+}
+
+function deleteCategory(id, name) {
+    if (confirm('Вы уверены, что хотите удалить категорию "' + name + '"?')) {
+        // Здесь будет AJAX запрос для удаления категории
+        alert('Функция удаления категории будет реализована через API');
+    }
+}
+</script>
+{% endblock %}

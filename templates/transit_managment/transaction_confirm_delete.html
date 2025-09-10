@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление транзакции - ДДС Управление{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Подтверждение удаления
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">Вы уверены, что хотите удалить эту транзакцию?</p>
+                
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">Детали транзакции:</h6>
+                    <hr>
+                    <p class="mb-1"><strong>Дата:</strong> {{ transaction.date|date:"d.m.Y H:i" }}</p>
+                    <p class="mb-1"><strong>Статус:</strong> {{ transaction.status.name }}</p>
+                    <p class="mb-1"><strong>Тип:</strong> {{ transaction.transaction_type.name }}</p>
+                    <p class="mb-1"><strong>Категория:</strong> {{ transaction.category.name }}</p>
+                    <p class="mb-1"><strong>Сумма:</strong> 
+                        {% if transaction.transaction_type.name == 'Пополнение' %}
+                            <span class="text-success">+{{ transaction.amount }} ₽</span>
+                        {% else %}
+                            <span class="text-danger">-{{ transaction.amount }} ₽</span>
+                        {% endif %}
+                    </p>
+                    {% if transaction.comment %}
+                        <p class="mb-0"><strong>Комментарий:</strong> {{ transaction.comment }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Внимание!</strong> Это действие нельзя отменить.
+                </div>
+                
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'transit_managment:home' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Удалить транзакцию
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
