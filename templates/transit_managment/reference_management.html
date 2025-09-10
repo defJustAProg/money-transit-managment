@@ -156,6 +156,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="statusForm">
+                <input type="hidden" id="statusId" value="">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="statusName" class="form-label">Название</label>
@@ -184,6 +185,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="typeForm">
+                <input type="hidden" id="typeId" value="">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="typeName" class="form-label">Название</label>
@@ -212,6 +214,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="categoryForm">
+                <input type="hidden" id="categoryId" value="">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="categoryName" class="form-label">Название</label>
@@ -252,43 +255,144 @@
 
 {% block extra_js %}
 <script>
-// Обработчики для статусов
+// CSRF helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+// DRF endpoints
+const API_URLS = {
+    statusList: "{% url 'transit_managment:status-list' %}",
+    typeList: "{% url 'transit_managment:transactiontype-list' %}",
+    categoryList: "{% url 'transit_managment:category-list' %}",
+};
+
+function resetStatusModal(){
+    $('#statusId').val('');
+    $('#statusName').val('');
+    $('#statusDescription').val('');
+    $('#addStatusModal .modal-title').text('Добавить статус');
+}
+function resetTypeModal(){
+    $('#typeId').val('');
+    $('#typeName').val('');
+    $('#typeDescription').val('');
+    $('#addTypeModal .modal-title').text('Добавить тип операции');
+}
+function resetCategoryModal(){
+    $('#categoryId').val('');
+    $('#categoryName').val('');
+    $('#categoryDescription').val('');
+    $('#categoryType').val('');
+    $('#categoryParent').val('');
+    $('#addCategoryModal .modal-title').text('Добавить категорию');
+}
+
+$('#addStatusModal').on('hidden.bs.modal', resetStatusModal);
+$('#addTypeModal').on('hidden.bs.modal', resetTypeModal);
+$('#addCategoryModal').on('hidden.bs.modal', resetCategoryModal);
+
+// CREATE/UPDATE: Статусы
 $('#statusForm').submit(function(e) {
     e.preventDefault();
-    // Здесь будет AJAX запрос для создания/обновления статуса
-    alert('Функция добавления статуса будет реализована через API');
+    const id = $('#statusId').val();
+    const payload = {
+        name: $('#statusName').val().trim(),
+        description: $('#statusDescription').val().trim(),
+    };
+    const isUpdate = !!id;
+    const url = isUpdate ? (API_URLS.statusList + id + '/') : API_URLS.statusList;
+    $.ajax({
+        url: url,
+        type: isUpdate ? 'PUT' : 'POST',
+        headers: { 'X-CSRFToken': csrftoken },
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function() { location.reload(); },
+        error: function(xhr){
+            alert('Ошибка сохранения статуса');
+        }
+    });
 });
 
-// Обработчики для типов операций
+// CREATE/UPDATE: Типы операций
 $('#typeForm').submit(function(e) {
     e.preventDefault();
-    // Здесь будет AJAX запрос для создания/обновления типа
-    alert('Функция добавления типа операции будет реализована через API');
+    const id = $('#typeId').val();
+    const payload = {
+        name: $('#typeName').val().trim(),
+        description: $('#typeDescription').val().trim(),
+    };
+    const isUpdate = !!id;
+    const url = isUpdate ? (API_URLS.typeList + id + '/') : API_URLS.typeList;
+    $.ajax({
+        url: url,
+        type: isUpdate ? 'PUT' : 'POST',
+        headers: { 'X-CSRFToken': csrftoken },
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function() { location.reload(); },
+        error: function(){ alert('Ошибка сохранения типа операции'); }
+    });
 });
 
-// Обработчики для категорий
+// CREATE/UPDATE: Категории
 $('#categoryForm').submit(function(e) {
     e.preventDefault();
-    // Здесь будет AJAX запрос для создания/обновления категории
-    alert('Функция добавления категории будет реализована через API');
+    const id = $('#categoryId').val();
+    const parentVal = $('#categoryParent').val();
+    const payload = {
+        name: $('#categoryName').val().trim(),
+        description: $('#categoryDescription').val().trim(),
+        transaction_type: $('#categoryType').val() || null,
+        parent: parentVal ? parentVal : null,
+    };
+    const isUpdate = !!id;
+    const url = isUpdate ? (API_URLS.categoryList + id + '/') : API_URLS.categoryList;
+    $.ajax({
+        url: url,
+        type: isUpdate ? 'PUT' : 'POST',
+        headers: { 'X-CSRFToken': csrftoken },
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function() { location.reload(); },
+        error: function(xhr){
+            let msg = 'Ошибка сохранения категории';
+            try { const data = JSON.parse(xhr.responseText); if (data && data.non_field_errors) msg += ': ' + data.non_field_errors.join(', ');} catch(e){}
+            alert(msg);
+        }
+    });
 });
 
-// Функции редактирования
+// Edit helpers
 function editStatus(id, name, description) {
+    $('#statusId').val(id);
     $('#statusName').val(name);
     $('#statusDescription').val(description);
     $('#addStatusModal .modal-title').text('Редактировать статус');
     $('#addStatusModal').modal('show');
 }
-
 function editType(id, name, description) {
+    $('#typeId').val(id);
     $('#typeName').val(name);
     $('#typeDescription').val(description);
     $('#addTypeModal .modal-title').text('Редактировать тип операции');
     $('#addTypeModal').modal('show');
 }
-
 function editCategory(id, name, description, typeId, parentId) {
+    $('#categoryId').val(id);
     $('#categoryName').val(name);
     $('#categoryDescription').val(description);
     $('#categoryType').val(typeId);
@@ -297,25 +401,33 @@ function editCategory(id, name, description, typeId, parentId) {
     $('#addCategoryModal').modal('show');
 }
 
-// Функции удаления
+// DELETE
+function ajaxDelete(url, onSuccessMessage) {
+    $.ajax({
+        url: url,
+        type: 'DELETE',
+        headers: { 'X-CSRFToken': csrftoken },
+        success: function() { alert(onSuccessMessage); location.reload(); },
+        error: function(xhr) {
+            let msg = 'Ошибка при удалении';
+            try { const data = JSON.parse(xhr.responseText); if (data && data.detail) msg += ': ' + data.detail; } catch (e) {}
+            alert(msg);
+        }
+    });
+}
 function deleteStatus(id, name) {
     if (confirm('Вы уверены, что хотите удалить статус "' + name + '"?')) {
-        // Здесь будет AJAX запрос для удаления статуса
-        alert('Функция удаления статуса будет реализована через API');
+        ajaxDelete(API_URLS.statusList + id + '/', 'Статус удалён');
     }
 }
-
 function deleteType(id, name) {
     if (confirm('Вы уверены, что хотите удалить тип операции "' + name + '"?')) {
-        // Здесь будет AJAX запрос для удаления типа
-        alert('Функция удаления типа операции будет реализована через API');
+        ajaxDelete(API_URLS.typeList + id + '/', 'Тип операции удалён');
     }
 }
-
 function deleteCategory(id, name) {
     if (confirm('Вы уверены, что хотите удалить категорию "' + name + '"?')) {
-        // Здесь будет AJAX запрос для удаления категории
-        alert('Функция удаления категории будет реализована через API');
+        ajaxDelete(API_URLS.categoryList + id + '/', 'Категория удалена');
     }
 }
 </script>

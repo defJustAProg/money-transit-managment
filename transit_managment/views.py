@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
@@ -19,6 +21,8 @@ from .serializers import (
     TransactionSerializer,
     TransactionTypeSerializer,
 )
+
+logger = logging.getLogger('default')
 
 
 class StatusViewSet(viewsets.ModelViewSet):
@@ -147,6 +151,7 @@ def transaction_create(request):
             return redirect('transit_managment:home')
         except Exception as e:
             messages.error(request, f'Ошибка при создании транзакции: {str(e)}')
+            logger.exception(e)
 
     context = {
         'statuses': Status.objects.all(),
@@ -174,6 +179,7 @@ def transaction_edit(request, pk):
             return redirect('transit_managment:home')
         except Exception as e:
             messages.error(request, f'Ошибка при обновлении транзакции: {str(e)}')
+            logger.exception(e)
 
     context = {
         'transaction': transaction,

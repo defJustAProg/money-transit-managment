@@ -22,6 +22,14 @@ if DEBUG:
                 'backupCount': 7,
                 'when': 'midnight',
             },
+            'default_file': {
+                'level': 'DEBUG',
+                'class': 'logging.handlers.TimedRotatingFileHandler',
+                'formatter': 'verbose',
+                'filename': os.path.join(BASE_DIR, 'logs/default.log'),
+                'backupCount': 7,
+                'when': 'midnight',
+            },
         },
         'loggers': {
             'django': {
@@ -31,6 +39,11 @@ if DEBUG:
             },
             'django.request': {
                 'handlers': ['django_file'],
+                'level': 'DEBUG',
+                'propagate': False,
+            },
+            'default': {
+                'handlers': ['default_file'],
                 'level': 'DEBUG',
                 'propagate': False,
             },
